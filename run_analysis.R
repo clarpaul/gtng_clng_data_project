@@ -5,7 +5,7 @@
 # 1. tidy_list$tidy_summary   A summary of feature data for certain variables in the UCI data set
 # 2. tidy_list$tidy_data      Feature data from certain variables in the UCI data set
 #
-# It also writes both elements of the above list to the wd as space-delimited text files
+# It also writes both elements of the above list to the working directory as space-delimited text files
 # "tidy_summary.txt" and "tidy_data.txt"
 #
 # NOTE
@@ -55,15 +55,16 @@ run_analysis <- function()
     #
     if(!file.exists("UCI_HAR_Dataset.zip"))
     {
-        download.file(paste0("https://d396qusza40orc.cloudfront.net/", 
+        status <- download.file(paste0("https://d396qusza40orc.cloudfront.net/", 
                              "getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"),"UCI_HAR_Dataset.zip")
+        if(status!=0) stop("Download of zipped archive failed")
     }
     if(!file.exists("UCI_Data"))
     {
         unzip("UCI_HAR_Dataset.zip", exdir = "UCI_Data", unzip = getOption("unzip"))
     }
     
-    basepath <- file.path("UCI_Data","UCI HAR Dataset")
+    basepath <- file.path("UCI_Data","UCI HAR Dataset") # set path for reading files in unzipped archive
     
     #
     # Get feature names: Read & select features, creating vector of indices for selection of feature data 
@@ -74,8 +75,7 @@ run_analysis <- function()
     features <- features[indices]
 
     #
-    # Process feature names: Transform feature names into more standard, readable format
-    # 
+    # Transform feature names into more standard, readable format
     # Note - transformed features names are consistent with the 'Google R Style Guide'
     #        see: https://google.github.io/styleguide/Rguide.xml
     #
@@ -103,7 +103,8 @@ run_analysis <- function()
     names(inertial_data) <- features
 
     #
-    # Read in activity labels and slightly reformat; read activity data and substitute labels for numbers 
+    # Read in activity labels and reformat to lower-case with "." separating words
+    # Read activity data and substitute labels for numbers 
     #
     activity_labels <- file.path(basepath,"activity_labels.txt")
     activity_names <- read_table(activity_labels,col_names = c("activity_no","activity"))
@@ -123,15 +124,19 @@ run_analysis <- function()
                   read_table(subject_train, col_names = "subject"))
 
     #
-    # Merge subject, activity, and feature data into a tidy data-set
+    # Merge subject, activity, and feature data into a tidy data-set, and write it to disk
     #
     inertial_data <- tbl_df(cbind(subjects, activity, inertial_data))
     inertial_data <- arrange(inertial_data, subject, activity)
     inertial_data$subject <- as.factor(inertial_data$subject)
+    if (!file.exists("tidy_data.txt"))
+    {
+        write_delim(inertial_data,"tidy_data.txt")
+    }
 
     #
     # Create a tidy summary containing the average value for each combination of 'subject' & 'activity'
-    # Use packages 'dplyr' and 'tidyr' to do it
+    # Use packages 'dplyr' and 'tidyr' to do it. Afterward, write it to disk.
     #
     data_summary <- inertial_data %>% unite(subject_activity, subject, activity) %>% 
           group_by(subject_activity) %>% summarise_each(funs(mean)) %>%
@@ -141,16 +146,19 @@ run_analysis <- function()
     names(data_summary) <- c("subject", "activity", paste0("avg.", features))
     data_summary$subject <- as.factor(data_summary$subject)
     data_summary$activity <- as.factor(data_summary$activity)
-    tidy_list <- list(tidy_summary = data_summary, tidy_data = inertial_data)
     if (!file.exists("tidy_summary.txt"))
     {
         write_delim(data_summary,"tidy_summary.txt")
     }
-    if (!file.exists("tidy_data.txt"))
-    {
-        write_delim(data_summary,"tidy_data.txt")
-    }
+
+    #
+    # Return tidy_summary and tidy_data tbl_df's as a list
+    #
+    tidy_list <- list(tidy_summary = data_summary, tidy_data = inertial_data)
     tidy_list
 }
 
+#
+# Cause function run_analysis to be executed when script is sourced
+#
 tidy_list <- run_analysis()
