@@ -1,36 +1,40 @@
-# 
-# PROCESSES cell-phone sensor data provided by UCI and ASSEMBLES two tidy data-sets, loading them into
-# the workspace as a list of two tbl_df dataframes:
-#
-# 1. tidy_list$tidy_summary   A summary of feature data for certain variables in the UCI data set
-# 2. tidy_list$tidy_data      Feature data from certain variables in the UCI data set
-#
-# It also writes both elements of the above list to the working directory as space-delimited text files
-# "tidy_summary.txt" and "tidy_data.txt"
-#
-# NOTE
-# ->> The analysis script depends on 3 packages. The script attempts to load these when needed, and if 
-#     unable, installsthem from the default CRAN repository.  The packages are:
-#
-#     "readr" (for speed of data-loading and progress bars)
-#     "dplyr" & "tidyr" (for creation of tidy data summary) 
-#              The script attempts to load these packages when needed, 
-#              and if unable to do so, installs them from CRAN
-#
-# ->> Before tidying, downloads and extract the zipped data from the URL specified for the project
-#     Note: does not download if the zip file already exists in the working directory
-#           does not unzip if the target data directory for the unzipped archive already exists
-#
 
-run_analysis <- function()
+run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE, unzip_if_needed = TRUE)
 {
-#
-# Function 'pkgLoad' checks if package is able to load and installs it if not. 
-# If installation attempted and package still unable to load, stops execution with error message. 
-#
-    pkgLoad <- function(pkgName)
+    # TRANSFORMS & ASSEMBLES cell-phone sensor data from UCI into two tidy data-sets, loading them into
+    # the workspace as a list of two tbl_df's (tidyr dataframes, which print well to the console) and
+    # writing them to the working directory as space-delimited text files
+    #
+    # list element    element name  filename          Description
+    # -------------   ------------  --------          -----------
+    # tidy_list[[1]]  tidy_summary  tidy_summary.txt  Averages of data for extracted variables
+    # tidy_list[[2]]  tidy_data     tidy_data.txt     Data for variables extracted from UCI data set
+    #
+    #
+    # NOTES:
+    # 
+    # (1) The analysis script depends on < THREE > packages. The script attempts to load these, and if 
+    #     unable to do so, installs them from the default CRAN repository.  The packages are:
+    #
+    #         Package             Purpose
+    #         -------             -------
+    #         "readr"             Data-loading into tbl_df's; progress bars
+    #         "dplyr" & "tidyr"   Creation of tidy data summary
+    #
+    # (2) Before tidying, downloads and extracts the zipped data from the URL specified for the project
+    #     Note: Doesn't download if zip-file of same name already exists in working directory
+    #           Doesn't unzip if target directory for unzipped archive already exists
+    #####
+    
+    #####
+    # Load necessary packages.
+    # 
+    # Function 'pkgLoad' checks if package is able to load and installs it if not. 
+    # If installation attempted and package still unable to load, stops execution with error message. 
+    ####
+    pkgLoad <- function(pkgName, inst_pkgs_if_needed = TRUE)
     {
-        if (!require(pkgName,character.only = TRUE))
+        if (!require(pkgName,character.only = TRUE) && inst_pkgs_if_needed)
         {
             install.packages(pkgName)  # Regarding argument "dependencies =" of install.packages(): 
                                 # the default, NA, indicates c("Depends", "Imports", "LinkingTo").
@@ -42,43 +46,52 @@ run_analysis <- function()
                 stop(paste0("Error installing/loading package",pkgName))
         }
     }
-
-    # Package for fast data read and write, with progress/status bars
     pkgLoad("readr")
-    # Packages to help with tidy data summary
     pkgLoad("dplyr")
     pkgLoad("tidyr")
-
-    #
-    # Download UCI data to current working directory ('WD'), create directory "UCI_Data" in WD,
-    # and unzip data into "UCI_Data" directory
-    #
-    if(!file.exists("UCI_HAR_Dataset.zip"))
+    #####
+    
+    #####
+    # Download UCI data to working directory.
+    # Create directory "UCI_Data" in working directory and unzip data into "UCI_Data" directory.
+    ####
+    if(!file.exists("UCI_HAR_Dataset.zip") && dwnld_zip_if_needed)
     {
         status <- download.file(paste0("https://d396qusza40orc.cloudfront.net/", 
                              "getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"),"UCI_HAR_Dataset.zip")
-        if(status!=0) stop("Download of zipped archive failed")
+       
+        # if error not thrown but download.file fails, some non-zero integer is returned 
+        if(status!=0) stop(paste("Download of zip archive failed.",
+                    "Try again or download archive manually into your working directory.",                                     "Name downloaded file 'UCI_HAR_Dataset.zip'")) # Use single quotes inside double quotes
     }
-    if(!file.exists("UCI_Data"))
+    
+    basepath <- file.path("UCI_Data","UCI HAR Dataset") # set platform-independent path for 
+                                                        # reading files in unzipped archive
+    if(!file.exists(basepath) && unzip_if_needed)
     {
-        unzip("UCI_HAR_Dataset.zip", exdir = "UCI_Data", unzip = getOption("unzip"))
+        unzip("UCI_HAR_Dataset.zip", exdir = "UCI_Data") # left out arg 'unzip = getOption("unzip")'
+                                                         # because it can throw Windows-specific errors
+                                                         # on some non-Windows platforms; also,
+                                                         # native method appears to be faster
     }
+    ####
     
-    basepath <- file.path("UCI_Data","UCI HAR Dataset") # set path for reading files in unzipped archive
-    
-    #
-    # Get feature names: Read & select features, creating vector of indices for selection of feature data 
-    # 
+    ####
+    # Read & select feature names containing 'mean()' and 'std()'.
+    # Create vector of indices of associated columns to be used later for selection of feature data. 
+    ### 
+    cat("\nReading feature names: columns read from 'features.txt' with following data types:\n\n")
     features <- read_table(file.path(basepath, "features.txt"), col_names = "feature")
     features <- features$feature          # Changes 'feature' from a dataframe to a vector
     indices <- sort(c(grep("mean\\(\\)", features), grep("std\\(\\)", features)))
     features <- features[indices]
-
-    #
+    #####
+    
+    #####
     # Transform feature names into more standard, readable format
     # Note - transformed features names are consistent with the 'Google R Style Guide'
     #        see: https://google.github.io/styleguide/Rguide.xml
-    #
+    #####
     features <- sub("[0-9]+","",features) # Removes all sequences of numbers
     features <- trimws(features, "left")  # Trims whitespace present on left
     features <- gsub("-","",features)     # Removes hyphens
@@ -91,21 +104,24 @@ run_analysis <- function()
     # pattern is changed to lower-case using "\\L", and the preceding dot is added via "\\."
     features <- gsub("([A-Z]|mean|std)","\\.\\L\\1",features, perl = TRUE)
 
-    #
-    # Read feature data, using indices to select subset, and assign feature names to columns of data
-    # 
+    ######
+    # Read feature data, use indices to select subset, and assign feature names to columns of data
+    ######
     testdata <- file.path(basepath,"test","X_test.txt")
     traindata <- file.path(basepath,"train","X_train.txt")
+    cat("\nReading feature data: columns read from test and training data with following data types:\n\n")
     inertial_data <- rbind(read_table(testdata, col_types = cols(.default = col_double()), 
-                                      col_names = FALSE),
+                                      col_names = FALSE, progress = TRUE),
               read_table(traindata, col_types = cols(.default = col_double()), 
-                         col_names = FALSE))[,indices]
+                         col_names = FALSE, progress = TRUE))[,indices]
     names(inertial_data) <- features
-
-    #
+    #####
+    
+    #####
     # Read in activity labels and reformat to lower-case with "." separating words
     # Read activity data and substitute labels for numbers 
-    #
+    #####
+    cat("\nReading activity data: columns read from activity labels and activity data w/ data types:\n\n")
     activity_labels <- file.path(basepath,"activity_labels.txt")
     activity_names <- read_table(activity_labels,col_names = c("activity_no","activity"))
     activity_names$activity <- sub("_","\\.",tolower(activity_names$activity))
@@ -114,18 +130,21 @@ run_analysis <- function()
     activities <- rbind(read_table(y_test, col_names = "activity_no"),
                     read_table(y_train, col_names = "activity_no"))
     activity <- activity_names$activity[activities$activity_no]
-
-    #
+    #####
+    
+    #####
     # Read in subject data and assign suitable column name
-    #
+    #####
+    cat("\nReading subject data: Columns read from subject data with following data types:\n\n")
     subject_test <- file.path(basepath,"test","subject_test.txt")
     subject_train <- file.path(basepath,"train","subject_train.txt")
     subjects <- rbind(read_table(subject_test, col_names = "subject"), 
                   read_table(subject_train, col_names = "subject"))
-
-    #
+    ####
+    
+    ####
     # Merge subject, activity, and feature data into a tidy data-set, and write it to disk
-    #
+    ####
     inertial_data <- tbl_df(cbind(subjects, activity, inertial_data))
     inertial_data <- arrange(inertial_data, subject, activity)
     inertial_data$subject <- as.factor(inertial_data$subject)
@@ -133,11 +152,12 @@ run_analysis <- function()
     {
         write_delim(inertial_data,"tidy_data.txt")
     }
-
-    #
+    ####
+    
+    ####
     # Create a tidy summary containing the average value for each combination of 'subject' & 'activity'
     # Use packages 'dplyr' and 'tidyr' to do it. Afterward, write it to disk.
-    #
+    ####
     data_summary <- inertial_data %>% unite(subject_activity, subject, activity) %>% 
           group_by(subject_activity) %>% summarise_each(funs(mean)) %>%
           separate(subject_activity,c("subject","activity"),sep="_")
@@ -150,15 +170,33 @@ run_analysis <- function()
     {
         write_delim(data_summary,"tidy_summary.txt")
     }
-
-    #
+    #####
+    
+    #####
     # Return tidy_summary and tidy_data tbl_df's as a list
-    #
+    #####
     tidy_list <- list(tidy_summary = data_summary, tidy_data = inertial_data)
     tidy_list
+    #####
+    
+    # function ends here
 }
 
+#####
+# 
+# Function call below causes function 'run_analysis' to be executed when script is sourced.
 #
-# Cause function run_analysis to be executed when script is sourced
+# Notes on arguments for function:
 #
-tidy_list <- run_analysis()
+# Set 'inst_pkgs_if_needed = FALSE' if you need to manually install necessary packages specified above.
+#      I.e. "readr", "tidyr", "dplyr"
+# Set 'dwnld_zip = FALSE' if you need to download zip archive manually.
+#      URL is "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+#      Zipfile must be downloaded to working directory and named "UCI_HAR_Dataset.zip"
+# Set 'unzip_archive = FALSE' if you need to unzip archive manually.
+#      Archive must be unzipped into a target directory named "UCI_Data" in your working directory.
+#
+# Note that even if these arguments are TRUE, specified operations will only be performed if necessary.
+#
+
+tidy_list <- run_analysis(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE, unzip_if_needed = TRUE)
