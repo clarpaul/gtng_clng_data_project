@@ -1,11 +1,18 @@
 # ReadMe: UCI Human Activity Recognition Data Tidying and Analysis
 The R script contained in `run_analysis.R` does multiple tasks:
- 1. Loads packages used for the data tidying and analysis, installing them from CRAN if they are not available in the host R library
- 2. Downloads the UCI archive containing the Human Activity Recognition ('HAR') data to file 'UCI_HAR_Dataset.zip'
- 3. Unzips the full archive into target directory 'UCI_Data'
- 4. Reads in data needed for tidying and analysis from the archive files for subject, activity, and feature data, and for feature naming 
- 5. Identifies and selects feature variables containing `mean()` and `std()`, and transforms variable names to tidier format, and assembles data into single dataframe in tidy format
- 6. Performs analysis on tidy data to create a tidy summary
+ 1.  Loads packages for data tidying/analysis, installing from CRAN if unavailable in host R library.
+ 2.  Downloads UCI archive with Human Activity Recognition data.
+ 3.  Unzips archive.
+ 4.  Reads feature names from archive. Builds vector of indices for features of interest. 
+ 5.  Transforms feature names into consistent, readable format. See [Google R Style Guide](https://google.github.io/styleguide/Rguide.xml).
+ 6.  Reads feature data, using indices from (4) to select subset of interest. Assigns 'tidy' feature names to columns.
+ 7.  Reads activity labels, transforming to format like (5). Reads numbered activity data and substitutes labels for numbers.
+ 8.  Reads in subject data.
+ 9.  Creates tidy dataset: merges subject, activity, and feature data, and writes result to working directory.
+ 10. Creates tidy summary: averages rows in (9) for each unique subject-activity pair. Writes result to disk.
+ 11. Loads tidy data and tiday summary to global environment.
+ 
+ Performs analysis on tidy data to create a tidy summary
  7. Writes the data and its summary to disk as text files, and loads it into the global environment within R
  
 Steps 1 through 3 may be skipped if the user wants to do them manually.  That is done by setting one or more of the three variables in the function call at the bottom of the file to FALSE.  However, even if not set to FALSE, the script does a check on the necessity of each of steps 1 through 3. In step 1, although the packages must be loaded for the function to operate, they are not installed if they can be loaded from the library. In step 2, the archive is not downloaded if a file of the appropriate name is already present in the working directory.  And in step 3, the archive is not unzipped if a set of directories of the appropriate names already exists. 
