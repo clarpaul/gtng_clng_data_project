@@ -1,12 +1,12 @@
 # ReadMe: UCI Human Activity Recognition Data Tidying and Analysis
 The R script contained in `run_analysis.R` does multiple tasks:
- 1. Loads packages used for the data tidying and analysis, installing them from CRAN if they are not locally available
- 2. Downloads the UCI archive containing the HAR data
- 3. Unzips the archive once its downloaded
- 4. Reads in data from the various archive files needed for the tidying and analysis
- 5. Assembles data into tidy data format
+ 1. Loads packages used for the data tidying and analysis, installing them from CRAN if they are not available in the host R library
+ 2. Downloads the UCI archive containing the Human Activity Recognition ('HAR') data to file 'UCI_HAR_Dataset.zip'
+ 3. Unzips the full archive into target directory 'UCI_Data'
+ 4. Reads in data needed for tidying and analysis from the archive files for subject, activity, and feature data, and for feature naming 
+ 5. Identifies and selects feature variables containing `mean()` and `std()`, and transforms variable names to tidier format, and assembles data into single dataframe in tidy format
  6. Performs analysis on tidy data to create a tidy summary
- 7. Writes the data and its summary to disk, and loads it into the global environment within R
+ 7. Writes the data and its summary to disk as text files, and loads it into the global environment within R
  
 Steps 1 through 3 may be skipped if the user wants to do them manually.  That is done by setting one or more of the three variables in the function call at the bottom of the file to FALSE.  However, even if not set to FALSE, the script does a check on the necessity of each of steps 1 through 3. In step 1, although the packages must be loaded for the function to operate, they are not installed if they can be loaded from the library. In step 2, the archive is not downloaded if a file of the appropriate name is already present in the working directory.  And in step 3, the archive is not unzipped if a set of directories of the appropriate names already exists. 
 
@@ -16,5 +16,5 @@ In step 5, the data is merged based.  Before merging, the activity names are sub
 
 In step 6, the data is summarized by taking averages of the rows corresponding to each unique subject-activity pair.  With 30 subjects and 6 activities, this results in 180 averages for each of the 66 columns.  Functions from `tidyr` and `dplyr` are used to do the summary.
 
-Finally, in step 6, the data and corresponding summary is written to the working directory in the form of two text files described in the CodeBook, and loaded into the memory as a list of two dataframes, as well.
+Finally, in step 7, the data and corresponding summary is written to the working directory in the form of two text files described in the CodeBook, and loaded into the memory as a list of two dataframes, as well.
  
