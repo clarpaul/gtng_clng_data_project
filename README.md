@@ -1,4 +1,5 @@
-# ReadMe: UCI Human Activity Recognition Data Tidying and Analysis
+# ReadMe: 
+# UCI Human Activity Recognition Data Tidying and Analysis
 The R script contained in `run_analysis.R` performs the following:
  1.  Loads packages for data tidying/analysis, installing from CRAN if unavailable in host R library.
  2.  Downloads UCI archive with Human Activity Recognition data.
