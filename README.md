@@ -10,7 +10,7 @@ The R script contained in `run_analysis.R` performs the following:
  8.  Reads in subject data.
  9.  Creates tidy data by merging subject, activity, and feature data; then writes result to working directory.
  10. Creates tidy summary by averaging rows in (9) for each unique subject-activity pair; then writes result to disk.
- 11. Loads tidy data and tiday summary to global environment.
+ 11. Loads tidy data and tidy summary to global environment.
 
 The function relies on packages `readr`, `tidyr`, and `dplyr` to operate. Package `readr` is used for speed and progress bars while reading all data files into `tbl_df` formats, which print to the console in a convenient, summary manner. Packages `tidyr` and `dplyr` are used for speed and concise code in step 10, creating a tidy summary.
 
