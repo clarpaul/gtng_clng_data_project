@@ -7,8 +7,9 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     #
     # list element    element name  filename          Description
     # -------------   ------------  --------          -----------
-    # tidy_list[[1]]  tidy_summary  tidy_summary.txt  Averages of data for extracted variables
-    # tidy_list[[2]]  tidy_data     tidy_data.txt     Data for variables extracted from UCI data set
+    # tidy_list[[1]]  tidy_data     tidy_data.txt     Data for variables extracted from UCI data set
+    # tidy_list[[2]]  tidy_summary  tidy_summary.txt  Averages of data for extracted variables
+    #
     #
     #
     # NOTES:
@@ -175,7 +176,7 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     #####
     # Return tidy_summary and tidy_data tbl_df's as a list
     #####
-    tidy_list <- list(tidy_summary = data_summary, tidy_data = inertial_data)
+    tidy_list <- list(tidy_data = inertial_data, tidy_summary = data_summary)
     tidy_list
     #####
     
