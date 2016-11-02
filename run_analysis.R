@@ -28,10 +28,12 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     #####
     
     #####
+    #
     # Load necessary packages.
     # 
     # Function 'pkgLoad' checks if package is able to load and installs it if not. 
     # If installation attempted and package still unable to load, stops execution with error message. 
+    #
     ####
     pkgLoad <- function(pkgName, inst_pkgs_if_needed = TRUE)
     {
@@ -97,13 +99,19 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     features <- trimws(features, "left")  # Trims whitespace present on left
     features <- gsub("-","",features)     # Removes hyphens
     features <- sub("\\(\\)","",features) # Removes parentheses associated with mean() & std()
-    # REGEX explanation: gsub replaces single uppercase lettersw/lowercase letters
-    # preceded by a dot, or if "mean" or "std" are found, places a dot in front of those.
-    # Specifying Perl-style regex enables the 'replace' argument to 
-    # 'remember' the matched pattern that is stored via grouping notation "(...)" and referred to
-    # via "\\1" (the "\\1" specificies group number 1; in this case we have only 1 group). The matched
-    # pattern is changed to lower-case using "\\L", and the preceding dot is added via "\\."
-    features <- gsub("([A-Z]|mean|std)","\\.\\L\\1",features, perl = TRUE)
+    #
+    # Below call to gsub():
+    # --------------------
+    # Replaces single uppercase letters w/lowercase letters preceded by a dot, or, if 'mean' or 'std'
+    # are found, places a dot in front of those. 
+    #
+    # The preceding dot is added using "\\." in the replacement argument. The backreference "\1"
+    # refers to and remembers the 1st parenthesized subexpression (group) within the matched pattern
+    # (use "\2" or "\3" for the 2nd or 3rd parenthesized subexpression, etc.). 
+    # Only because 'perl = TRUE', "\L" can be used to convert the rest of the replacement to upper or
+    # lower case. An "\E" could be used to end the case conversion. See help page for grep, 'replacement'   
+    # argument, regarding backreferences and perl-style replacement operators "\L", "\U", and "\E".
+    features <- gsub(pattern = "([A-Z]|mean|std)", replacement = "\\.\\L\\1", features, perl = TRUE)
 
     ######
     # Read feature data, use indices to select subset, and assign feature names to columns of data
@@ -198,6 +206,6 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
 #      Archive must be unzipped into a target directory named "UCI_Data" in your working directory.
 #
 # Note that even if these arguments are TRUE, specified operations will only be performed if necessary.
-#
+#####
 
 tidy_list <- run_analysis(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE, unzip_if_needed = TRUE)
