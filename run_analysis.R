@@ -14,7 +14,7 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     #
     # NOTES:
     # 
-    # (1) The analysis script depends on < THREE > packages. The script attempts to load these, and if 
+    # (A) The analysis script depends on < THREE > packages. The script attempts to load these, and if 
     #     unable to do so, installs them from the default CRAN repository.  The packages are:
     #
     #         Package             Purpose
@@ -22,17 +22,17 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     #         "readr"             Data-loading into tbl_df's; progress bars
     #         "dplyr" & "tidyr"   Creation of tidy data summary
     #
-    # (2) Before tidying, downloads and extracts the zipped data from the URL specified for the project
+    # (B) Before tidying, downloads and extracts the zipped data from the URL specified for the project
     #     Note: Doesn't download if zip-file of same name already exists in working directory
     #           Doesn't unzip if target directory for unzipped archive already exists
     #####
     
     #####
     #
-    # Load necessary packages.
+    # (1) Load necessary packages.
     # 
-    # Function 'pkgLoad' checks if package is able to load and installs it if not. 
-    # If installation attempted and package still unable to load, stops execution with error message. 
+    #     Function 'pkgLoad' checks if package is able to load and installs it if not. 
+    #     If installation attempted and package still unable to load, stops execution with error message. 
     #
     ####
     pkgLoad <- function(pkgName, inst_pkgs_if_needed = TRUE)
@@ -55,8 +55,7 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     #####
     
     #####
-    # Download UCI data to working directory.
-    # Create directory "UCI_Data" in working directory and unzip data into "UCI_Data" directory.
+    # (2) Download UCI data to working directory.
     ####
     if(!file.exists("UCI_HAR_Dataset.zip") && dwnld_zip_if_needed)
     {
@@ -68,6 +67,9 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
                     "Try again or download archive manually into your working directory.",                                     "Name downloaded file 'UCI_HAR_Dataset.zip'")) # Use single quotes inside double quotes
     }
     
+    ####
+    # (3) Create directory "UCI_Data" in working directory and unzip data into "UCI_Data" directory.
+    ####
     basepath <- file.path("UCI_Data","UCI HAR Dataset") # set platform-independent path for 
                                                         # reading files in unzipped archive
     if(!file.exists(basepath) && unzip_if_needed)
@@ -80,10 +82,10 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     ####
     
     ####
-    # Read & select feature names containing 'mean()' and 'std()'.
-    # Create vector of indices of associated columns to be used later for selection of feature data. 
+    # (4) Read & select feature names containing 'mean()' and 'std()'.
+    #     Create vector of indices of associated columns to be used later for selection of feature data. 
     ### 
-    cat("\nReading feature names: columns read from 'features.txt' with following data types:\n\n")
+    cat("\nReading feature names: columns read from 'features.txt' with following data type(s):\n\n")
     features <- read_table(file.path(basepath, "features.txt"), col_names = "feature")
     features <- features$feature          # Changes 'feature' from a dataframe to a vector
     indices <- sort(c(grep("mean\\(\\)", features), grep("std\\(\\)", features)))
@@ -91,11 +93,13 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     #####
     
     #####
-    # Transform feature names into more standard, readable format
-    # Note - transformed features names are consistent with the 'Google R Style Guide'
-    #        see: https://google.github.io/styleguide/Rguide.xml
+    # (5) Transform feature names into more standard, readable format
+    #     Note - transformed features names are consistent with the 'Google R Style Guide'
+    #            see: https://google.github.io/styleguide/Rguide.xml
     #####
-    features <- sub("[0-9]+","",features) # Removes all sequences of numbers
+    features <- sub("[0-9]+","",features) # sub() removes the first sequences of numbers encountered in
+                                          # each element of the vector; i.e., removes only the row number that 
+                                          # gets read in by read_table as part of each feature name
     features <- trimws(features, "left")  # Trims whitespace present on left
     features <- gsub("-","",features)     # Removes hyphens
     features <- sub("\\(\\)","",features) # Removes parentheses associated with mean() & std()
@@ -114,7 +118,7 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     features <- gsub(pattern = "([A-Z]|mean|std)", replacement = "\\.\\L\\1", features, perl = TRUE)
 
     ######
-    # Read feature data, use indices to select subset, and assign feature names to columns of data
+    # (6) Read feature data, use indices to select subset, and assign feature names to columns of data
     ######
     testdata <- file.path(basepath,"test","X_test.txt")
     traindata <- file.path(basepath,"train","X_train.txt")
@@ -127,8 +131,8 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     #####
     
     #####
-    # Read in activity labels and reformat to lower-case with "." separating words
-    # Read activity data and substitute labels for numbers 
+    # (7) Read in activity labels and reformat to lower-case with "." separating word fragments.
+    #     Read activity data and substitute labels for numbers.
     #####
     cat("\nReading activity data: columns read from activity labels and activity data w/ data types:\n\n")
     activity_labels <- file.path(basepath,"activity_labels.txt")
@@ -142,7 +146,7 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     #####
     
     #####
-    # Read in subject data and assign suitable column name
+    # (8) Read in subject data and assign suitable column name
     #####
     cat("\nReading subject data: Columns read from subject data with following data types:\n\n")
     subject_test <- file.path(basepath,"test","subject_test.txt")
@@ -152,7 +156,7 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     ####
     
     ####
-    # Merge subject, activity, and feature data into a tidy data-set, and write it to disk
+    # (9) Merge subject, activity, and feature data into a tidy data-set, and write it to disk.
     ####
     inertial_data <- tbl_df(cbind(subjects, activity, inertial_data))
     inertial_data <- arrange(inertial_data, subject, activity)
@@ -164,8 +168,8 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     ####
     
     ####
-    # Create a tidy summary containing the average value for each combination of 'subject' & 'activity'
-    # Use packages 'dplyr' and 'tidyr' to do it. Afterward, write it to disk.
+    # (10) Create a tidy summary containing the average value for each combination of 'subject' & 'activity'
+    #      Use packages 'dplyr' and 'tidyr' to do it. Afterward, write it to disk.
     ####
     data_summary <- inertial_data %>% unite(subject_activity, subject, activity) %>% 
           group_by(subject_activity) %>% summarise_each(funs(mean)) %>%
@@ -182,7 +186,7 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     #####
     
     #####
-    # Return tidy_summary and tidy_data tbl_df's as a list
+    # (11) Return tidy_summary and tidy_data tbl_df's as a list
     #####
     tidy_list <- list(tidy_data = inertial_data, tidy_summary = data_summary)
     tidy_list
