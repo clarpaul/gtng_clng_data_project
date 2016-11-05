@@ -35,7 +35,7 @@ run_analysis <- function(inst_pkgs_if_needed = TRUE, dwnld_zip_if_needed = TRUE,
     #     If installation attempted and package still unable to load, stops execution with error message. 
     #
     ####
-    pkgLoad <- function(pkgName, inst_pkgs_if_needed = inst_pkgs_if_needed)
+    pkgLoad <- function(pkgName, inst_pkgs_if_needed = TRUE)
     {
         if (!require(pkgName,character.only = TRUE) && inst_pkgs_if_needed)
         {
